@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokSnap — TikTok Video Downloader Tanpa Watermark HD & MP3</title>
+  <meta name="description" content="TokSnap: Snap Your Favorite Videos. Download video TikTok kualitas tinggi HD tanpa watermark dan simpan musik audio MP3 secara gratis, cepat, aman di semua perangkat.">
+  <meta name="keywords" content="tiktok downloader, download video tiktok, unduh video tiktok tanpa watermark, tiktok mp3, toksnap">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TokSnap — Snap Your Favorite Videos">
+  <meta property="og:description" content="Download video TikTok tanpa watermark dengan kualitas HD dan ekstrak MP3 instan.">
+  <meta property="og:image" content="/assets/logo.svg">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet with Cache Busting -->
+  <link rel="stylesheet" href="/css/style.css?v=2.5">
+</head>
+<body>
+  <!-- Aksesibilitas: Skip Link -->
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
+
+  <!-- Header / Navigation Bar -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="/" class="brand-link" aria-label="TokSnap Beranda">
+        <div class="brand-icon">
+          <img src="/assets/logo.svg" alt="TokSnap Logo" width="34" height="34">
+        </div>
+        <span class="brand-text">Tok<span>Snap</span></span>
+      </a>
+
+      <!-- Desktop Navigation Menu -->
+      <nav aria-label="Menu Utama">
+        <ul id="navMenu" class="nav-menu">
+          <li><a href="#beranda" class="nav-link">Beranda</a></li>
+          <li><a href="#cara-penggunaan" class="nav-link">Cara Pakai</a></li>
+          <li><a href="#keunggulan" class="nav-link">Keunggulan</a></li>
+          <li><a href="#faq" class="nav-link">FAQ</a></li>
+          <li><a href="#tentang" class="nav-link">Tentang Kami</a></li>
+        </ul>
+      </nav>
+
+      <!-- Header Action Items -->
+      <div class="header-actions">
+        <div class="server-status-pill" title="Server downloader siap melayani permintaan">
+          <span class="status-dot"></span>
+          <span class="status-label">Server Online</span>
+        </div>
+
+        <button id="hamburgerBtn" class="hamburger-btn" aria-label="Buka navigasi menu" aria-expanded="false" aria-controls="navMenu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section id="beranda" class="hero-section">
+      <div class="hero-badge">
+        <span class="badge-icon-dot" aria-hidden="true"></span>
+        <span class="badge-text">TikTok Video Downloader</span>
+      </div>
+
+      <h1 class="hero-title">
+        Download Video TikTok <br>
+        <span class="highlight-text">Tanpa Watermark HD</span>
+      </h1>
+
+      <p class="hero-description">
+        Simpan video TikTok favorit dan ekstrak lagu audio MP3 berkualitas tinggi secara gratis, cepat, dan tanpa batas di semua perangkat.
+      </p>
+
+      <!-- URL Input Card -->
+      <div class="downloader-form-container" id="dropZoneArea">
+        <form id="downloaderForm" class="downloader-form" novalidate>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </span>
+            <input 
+              type="url" 
+              id="tiktokUrl" 
+              name="url" 
+              class="url-input" 
+              placeholder="Tempel link video TikTok di sini (atau drag & drop link)..." 
+              autocomplete="off"
+              aria-label="Tautan video TikTok"
+              required
+            >
+            <button type="button" id="clearBtn" class="clear-btn" aria-label="Hapus teks tautan" title="Hapus input">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="6"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="action-buttons-group">
+            <button type="button" id="pasteBtn" class="btn btn-secondary" aria-label="Tempelkan tautan dari clipboard" title="Tempel tautan dari clipboard">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              </svg>
+              <span>Tempel</span>
+            </button>
+
+            <button type="submit" id="submitBtn" class="btn btn-primary" aria-label="Proses dan download video">
+              <span id="submitSpinner" class="spinner" style="display: none;" aria-hidden="true"></span>
+              <svg id="submitIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span id="submitBtnText">Download Sekarang</span>
+            </button>
+          </div>
+        </form>
+
+        <div id="dragDropNotice" class="drag-drop-notice" style="display: none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Lepaskan link TikTok di sini untuk menempelkan
+        </div>
+      </div>
+
+      <!-- Quick Hint -->
+      <div class="input-hint">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Mendukung tautan resmi tiktok.com, vt.tiktok.com, dan vm.tiktok.com</span>
+      </div>
+
+      <!-- Notification Banner (Error / Info) -->
+      <div id="notificationBanner" class="notification-banner hidden" role="alert">
+        <div class="notification-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="notification-body">
+          <div id="notificationTitle" class="notification-title"></div>
+          <div id="notificationMsg"></div>
+        </div>
+      </div>
+
+      <!-- Trust Metrics Counter Cards -->
+      <div class="trust-metrics-grid">
+        <div class="trust-metric-card">
+          <div class="metric-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">Kualitas HD</span>
+            <span class="metric-label">Tanpa Kompresi</span>
+          </div>
+        </div>
+
+        <div class="trust-metric-card">
+          <div class="metric-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">Audio MP3</span>
+            <span class="metric-label">Ekstrak Musik Asli</span>
+          </div>
+        </div>
+
+        <div class="trust-metric-card">
+          <div class="metric-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">100% Privat</span>
+            <span class="metric-label">Tanpa Log &amp; Registrasi</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preview Video Result Section -->
+    <section id="resultSection" class="result-section hidden" aria-live="polite">
+      <div class="result-card">
+        <!-- Thumbnail / Video Player Column -->
+        <div class="result-media-col" id="mediaCol">
+          <!-- Thumbnail Wrapper with Interactive Play Button -->
+          <div class="thumbnail-wrapper" id="thumbnailWrapper">
+            <img id="resultThumbnail" src="" alt="Thumbnail Video TikTok" class="result-thumbnail">
+            <span id="durationPill" class="duration-pill">0:00</span>
+            <div class="media-overlay-badge">Pratinjau Video</div>
+            
+            <button type="button" id="playPreviewBtn" class="play-preview-overlay-btn" aria-label="Putar pratinjau video" title="Klik untuk memutar video di sini">
+              <span class="play-circle-glow">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                </svg>
+              </span>
+              <span class="play-action-text">Putar Video</span>
+            </button>
+          </div>
+
+          <!-- HTML5 Video Player Container (Active when playing) -->
+          <div class="video-player-wrapper" id="videoPlayerWrapper" style="display: none;">
+            <video 
+              id="previewVideoPlayer" 
+              class="preview-video-element" 
+              controls 
+              playsinline 
+              preload="metadata"
+              aria-label="Pemutar Video TikTok"
+            >
+              Browser Anda tidak mendukung pemutaran video HTML5.
+            </video>
+            <div class="player-top-bar">
+              <span class="playing-live-pill">
+                <span class="pulse-live-dot"></span>
+                <span>Memutar Pratinjau</span>
+              </span>
+              <button type="button" id="closeVideoBtn" class="close-video-btn" title="Tutup video dan kembali ke thumbnail">
+                ✕ Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Column -->
+        <div class="result-content-col">
+          <div>
+            <!-- Creator Profile -->
+            <div class="creator-profile">
+              <img id="resultAvatar" src="" alt="Avatar Kreator" class="creator-avatar">
+              <div class="creator-info">
+                <div class="creator-name-row">
+                  <span id="resultAuthorName" class="creator-name">-</span>
+                  <span class="verified-icon" title="Kreator TikTok Resmi">✓</span>
+                </div>
+                <span id="resultAuthorHandle" class="creator-handle">-</span>
+              </div>
+            </div>
+
+            <!-- Title / Caption with quick copy -->
+            <div class="caption-container">
+              <p id="resultCaption" class="video-caption">-</p>
+              <button type="button" id="copyCaptionBtn" class="copy-caption-btn" title="Salin teks deskripsi">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Salin Teks</span>
+              </button>
+            </div>
+
+            <!-- Video Stats -->
+            <div class="video-stats-bar">
+              <div class="stat-item" title="Jumlah Tayangan">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span id="viewsCount">-</span>
+              </div>
+              <div class="stat-item" title="Jumlah Suka">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span id="likesCount">-</span>
+              </div>
+              <div class="stat-item" title="Komentar">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                <span id="commentsCount">-</span>
+              </div>
+              <div class="stat-item" title="Bagikan">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span id="sharesCount">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Buttons Container -->
+          <div>
+            <div id="downloadOptionsContainer" class="downloads-container">
+              <!-- Opsi download di-generate secara dinamis -->
+            </div>
+
+            <div class="reset-search-bar">
+              <button type="button" id="resetBtn" class="btn-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Unduh Video Lain</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Keunggulan Layanan -->
+    <section id="keunggulan" class="section-container">
+      <div class="section-header">
+        <span class="section-subtitle">Fitur Unggulan</span>
+        <h2 class="section-title">Mengapa Memilih TokSnap?</h2>
+        <p class="section-desc">Platform download TikTok tercepat dengan standar keamanan dan kualitas gambar terbaik.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <h3 class="feature-title">Kecepatan Server Kilat</h3>
+          <p class="feature-text">Didukung backend Node.js teroptimasi dengan pemrosesan URL dalam hitungan detik tanpa waktu tunggu atau antrean.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+          </div>
+          <h3 class="feature-title">Kualitas HD Asli</h3>
+          <p class="feature-text">Unduh video dengan resolusi tajam 1080p/720p tanpa watermark buram, persis seperti yang diunggah oleh kreator aslinya.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+          </div>
+          <h3 class="feature-title">Ekstrak Audio MP3</h3>
+          <p class="feature-text">Hanya butuh lagunya? Dapatkan rekaman audio MP3 jernih dari latar suara video TikTok hanya dengan satu klik.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+          </div>
+          <h3 class="feature-title">Kompatibel Semua Perangkat</h3>
+          <p class="feature-text">Berjalan mulus di Android, iPhone (iOS Safari), iPad, Windows PC, hingga Mac tanpa perlu aplikasi tambahan.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Aman &amp; Tanpa Log Riwayat</h3>
+          <p class="feature-text">Privasi Anda prioritas utama. Kami tidak menyimpan tautan, file unduhan, atau rekaman IP di basis data server.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+              <line x1="9" y1="9" x2="9.01" y2="9"></line>
+              <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+          </div>
+          <h3 class="feature-title">100% Bebas Biaya</h3>
+          <p class="feature-text">Unduh tanpa batas setiap hari secara gratis tanpa kartu kredit, registrasi akun, atau jebakan pop-up iklan spam.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cara Penggunaan (3 Langkah Sederhana) -->
+    <section id="cara-penggunaan" class="how-it-works-section">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-subtitle">Panduan Singkat</span>
+          <h2 class="section-title">Cara Download Video TikTok dalam 3 Langkah</h2>
+          <p class="section-desc">Hanya butuh beberapa detik untuk menyimpan video favorit langsung ke galeri HP atau komputer.</p>
+        </div>
+
+        <div class="steps-grid">
+          <!-- Step 1 -->
+          <div class="step-card">
+            <span class="step-number" aria-hidden="true">01</span>
+            <div class="step-icon-wrapper">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </div>
+            <h3 class="step-title">1. Salin Tautan Video</h3>
+            <p class="step-desc">Buka aplikasi TikTok di ponsel atau browser, pilih video yang disukai, tekan tombol <strong>Bagikan</strong> lalu klik <strong>Salin Tautan</strong>.</p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card">
+            <span class="step-number" aria-hidden="true">02</span>
+            <div class="step-icon-wrapper">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </div>
+            <h3 class="step-title">2. Tempel di TokSnap</h3>
+            <p class="step-desc">Buka situs TokSnap, tekan tombol <strong>Tempel</strong> di kolom pencarian, lalu tekan tombol <strong>Download Sekarang</strong>.</p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card">
+            <span class="step-number" aria-hidden="true">03</span>
+            <div class="step-icon-wrapper">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+            <h3 class="step-title">3. Simpan ke Galeri</h3>
+            <p class="step-desc">Pilih format unduhan (Video HD Tanpa Watermark atau Audio MP3), file otomatis diunduh dan tersimpan ke perangkat Anda.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="section-container">
+      <div class="section-header">
+        <span class="section-subtitle">Tanya Jawab</span>
+        <h2 class="section-title">Pertanyaan yang Sering Diajukan (FAQ)</h2>
+        <p class="section-desc">Jawaban jelas dan transparan mengenai fungsionalitas dan privasi TokSnap.</p>
+      </div>
+
+      <div class="faq-container">
+        <!-- Item 1 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Apakah mengunduh video di TokSnap sepenuhnya gratis?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Ya, TokSnap 100% gratis dan tidak memungut biaya apa pun. Anda dapat mengunduh video publik sebanyak apa pun yang Anda inginkan tanpa batasan kuota harian.
+          </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Apakah video hasil unduhan memiliki watermark TikTok?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            TokSnap menyediakan tombol pilihan unduhan <strong>Video HD (Tanpa Watermark)</strong> serta opsi <strong>Video Standar (Watermark)</strong> sesuai preferensi kebutuhan Anda.
+          </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Apakah TokSnap bisa mengunduh dari akun TikTok privat?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Tidak. Demi menjaga privasi pembuat konten dan mematuhi etika hukum, TokSnap hanya memproses video yang diatur ke status <strong>publik</strong> oleh pembuatnya. Video privat atau video yang telah dihapus tidak dapat diakses.
+          </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Di mana lokasi penyimpanan file setelah diunduh?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            File akan otomatis tersimpan di folder <strong>Downloads</strong> (Unduhan) perangkat Anda (pada browser Chrome, Safari di aplikasi Files/Photos iPhone, atau Windows/Mac).
+          </div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Bagaimana cara mengunduh di iPhone / iPad (iOS)?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Di iOS 13 ke atas, cukup buka browser Safari, tempel link video, dan tekan Download. Safari akan menampilkan konfirmasi "Unduh". Setelah selesai, file tersimpan di aplikasi <strong>Files &gt; Downloads</strong> dan dapat disimpan ke galeri foto.
+          </div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="faq-item">
+          <button class="faq-question-btn" aria-expanded="false">
+            <span>Mengapa video tertentu gagal diproses?</span>
+            <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Hal ini dapat terjadi apabila tautan yang disalin tidak lengkap, video disetel privat atau dihapus oleh pemiliknya, atau pembatasan wilayah (geo-restriction). Pastikan tautan video dapat diputar secara publik sebelum dicoba kembali.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tentang Section -->
+    <section id="tentang" class="section-container">
+      <div class="about-card">
+        <h3>Tentang TokSnap</h3>
+        <p>
+          TokSnap didirikan dengan komitmen untuk menyediakan pengalaman pengunduhan video TikTok yang bersih, cepat, dan aman tanpa gangguan iklan spam atau penipuan tautan palsu.
+        </p>
+        <p>
+          Arsitektur server kami mengedepankan keamanan tinggi dengan perlindungan pencegahan SSRF (Server-Side Request Forgery), filter domain ketat, rate limiting terdistribusi, serta tidak pernah mencatat atau merekam riwayat URL video pengguna di database.
+        </p>
+
+        <div class="about-highlights">
+          <div class="about-stat">
+            <span class="about-stat-number">100%</span>
+            <span class="about-stat-label">Privasi Terjaga</span>
+          </div>
+          <div class="about-stat">
+            <span class="about-stat-number">&lt; 2s</span>
+            <span class="about-stat-label">Waktu Respons</span>
+          </div>
+          <div class="about-stat">
+            <span class="about-stat-number">1080p</span>
+            <span class="about-stat-label">Maksimum Resolusi</span>
+          </div>
+          <div class="about-stat">
+            <span class="about-stat-number">MP3</span>
+            <span class="about-stat-label">Audio Terpisah</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification Pop-up -->
+  <div id="toastNotification" class="toast-popup" role="status" aria-live="polite">
+    <span id="toastIcon">✓</span>
+    <span id="toastMessage">Tautan berhasil disalin!</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="/" class="brand-link">
+          <div class="brand-icon">
+            <img src="/assets/logo.svg" alt="TokSnap Logo" width="30" height="30">
+          </div>
+          <span class="brand-text">Tok<span>Snap</span></span>
+        </a>
+        <p>Snap Your Favorite Videos. Unduh video TikTok berkualitas tinggi dengan antarmuka yang bersih, cepat, dan mudah digunakan di segala perangkat.</p>
+
+        <!-- Social Media Badges (Instagram, TikTok, WhatsApp) -->
+        <div class="footer-social-group">
+          <span class="social-group-label">Ikuti &amp; Hubungi Kami:</span>
+          <div class="social-badges-row">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-badge-item instagram" aria-label="Instagram TokSnap" title="Instagram Resmi TokSnap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+              <span>Instagram</span>
+            </a>
+
+            <a href="https://www.tiktok.com/@hlynn_1" target="_blank" rel="noopener noreferrer" class="social-badge-item tiktok" aria-label="TikTok TokSnap" title="TikTok Resmi TokSnap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.12V9.42a6.33 6.33 0 0 0-8.2 6.07 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.26a8.28 8.28 0 0 0 4.77 1.5V7.31a4.85 4.85 0 0 1-1.2-.62z"/>
+              </svg>
+              <span>TikTok</span>
+            </a>
+
+            <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="social-badge-item whatsapp" aria-label="WhatsApp TokSnap" title="Hubungi kami melalui WhatsApp">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <span>WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Navigasi Cepat</h4>
+        <ul class="footer-links">
+          <li><a href="#beranda" class="footer-link">Beranda</a></li>
+          <li><a href="#cara-penggunaan" class="footer-link">Cara Pakai</a></li>
+          <li><a href="#keunggulan" class="footer-link">Keunggulan Layanan</a></li>
+          <li><a href="#faq" class="footer-link">Tanya Jawab (FAQ)</a></li>
+          <li><a href="#tentang" class="footer-link">Tentang Kami</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Keamanan &amp; Etika</h4>
+        <ul class="footer-links">
+          <li><span class="footer-link">Hormati Hak Cipta Kreator</span></li>
+          <li><span class="footer-link">Hanya Konten Publik Sah</span></li>
+          <li><span class="footer-link">Tanpa Penyimpanan Data</span></li>
+          <li><span class="footer-link">Protokol Keamanan SSRF</span></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="footer-col-title">Media Sosial &amp; Kontak</h4>
+        <ul class="footer-links">
+          <li>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="footer-social-link instagram">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+              <span>Instagram @toksnap</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="footer-social-link tiktok">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.12V9.42a6.33 6.33 0 0 0-8.2 6.07 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.26a8.28 8.28 0 0 0 4.77 1.5V7.31a4.85 4.85 0 0 1-1.2-.62z"/>
+              </svg>
+              <span>TikTok @toksnap.id</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="footer-social-link whatsapp">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <span>WhatsApp Support</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-disclaimer">
+        <strong>Pernyataan Hukum (Disclaimer):</strong> TokSnap adalah platform independen dan tidak terafiliasi, disponsori, atau berasosiasi resmi dengan TikTok, ByteDance Ltd., atau pihak terkait lainnya. Seluruh hak cipta, merek dagang, dan kepemilikan materi video serta musik audio adalah milik pembuat konten dan pemegang hak cipta masing-masing. TokSnap hanya ditujukan untuk tujuan pengarsipan pribadi yang sah sesuai hukum yang berlaku.
+      </p>
+      <div class="footer-copyright">
+        <span>&copy; 2026 TokSnap. Hak Cipta Dilindungi Undang-Undang.</span>
+        <span>Royal Navy &amp; Platinum Edition.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- App Script with Cache Busting -->
+  <script src="/js/app.js?v=2.3"></script>
+</body>
+</html>

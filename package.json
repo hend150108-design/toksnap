@@ -1,0 +1,29 @@
+{
+  "name": "toksnap",
+  "version": "1.0.0",
+  "description": "TokSnap - Modern & Secure TikTok Video Downloader",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "tiktok",
+    "downloader",
+    "video",
+    "toksnap",
+    "express",
+    "vanilla-js"
+  ],
+  "author": "TokSnap Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0"
+  }
+}

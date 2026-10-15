@@ -2,7 +2,7 @@
   "name": "toksnap",
   "version": "1.0.0",
   "description": "TokSnap - Modern & Secure TikTok Video Downloader",
-  "main": "src/server.js",
+  "main": "api/index.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"

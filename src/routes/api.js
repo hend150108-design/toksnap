@@ -17,6 +17,23 @@ const ALLOWED_CDN_DOMAINS = [
 ];
 
 /**
+ * Root API endpoint
+ * GET /api or GET /
+ */
+router.get('/', (req, res) => {
+  res.json({
+    service: 'TokSnap API',
+    status: 'online',
+    version: '1.0.0',
+    endpoints: {
+      health: 'GET /api/health',
+      resolve: 'POST /api/resolve',
+      download: 'GET /api/download'
+    }
+  });
+});
+
+/**
  * Health check endpoint
  * GET /api/health
  */

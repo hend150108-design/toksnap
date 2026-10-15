@@ -51,6 +51,8 @@
 
 ```text
 toksnap/
+├── api/
+│   └── index.js                # Entry point Vercel Serverless Function
 ├── public/
 │   ├── assets/
 │   │   └── logo.svg            # Logo vektor TokSnap
@@ -82,6 +84,8 @@ toksnap/
 ├── .env.example                # Template variabel lingkungan
 ├── .env                        # Konfigurasi lingkungan lokal
 ├── .gitignore
+├── .vercelignore               # Berkas yang diabaikan saat deploy Vercel
+├── vercel.json                 # Konfigurasi routing serverless Vercel
 ├── package.json
 └── README.md
 ```
@@ -213,6 +217,42 @@ Cakupan pengujian:
 ---
 
 ## 🌐 Petunjuk Deployment ke Production
+
+### ⚡ Deployment ke Vercel (Rekomendasi Utama)
+
+TokSnap sudah dikonfigurasi penuh dengan arsitektur **Vercel Serverless Function** (`api/index.js`) dan **Vercel Edge CDN** (`public/`).
+
+#### Opsi A: Melalui Vercel Dashboard & GitHub (Otomatis CI/CD)
+1. **Push perubahan proyek ke GitHub**:
+   ```bash
+   git add .
+   git commit -m "feat: setup full Vercel serverless support"
+   git push origin main
+   ```
+2. Buka dashboard [Vercel](https://vercel.com/) dan login menggunakan akun GitHub Anda.
+3. Klik tombol **"Add New..."** lalu pilih **"Project"**.
+4. Cari dan pilih repository `hend150108-design/toksnap`, lalu klik **"Import"**.
+5. Pada panel konfigurasi:
+   - **Framework Preset:** Pilih `Other`.
+   - **Root Directory:** `./`
+   - **Build Command:** Kosongkan (default).
+   - **Output Directory:** Kosongkan (Vercel otomatis menyajikan folder `public`).
+6. *(Opsional)* Pada menu **Environment Variables**, Anda dapat menambahkan variabel jika diperlukan (misalnya `DEFAULT_ADAPTER=tikwm` atau kredensial `RAPIDAPI_KEY`). Jika tidak diisi, TokSnap akan langsung berjalan otomatis menggunakan adapter TikWM tanpa memerlukan API key!
+7. Klik tombol **"Deploy"**. Dalam beberapa detik situs TokSnap Anda akan aktif dengan domain `.vercel.app` dan HTTPS otomatis!
+
+#### Opsi B: Melalui Vercel CLI (Terminal)
+```bash
+# 1. Instal Vercel CLI secara global
+npm install -g vercel
+
+# 2. Login ke akun Vercel Anda
+vercel login
+
+# 3. Jalankan perintah deploy ke Production
+vercel --prod
+```
+
+---
 
 ### Menggunakan PM2 (VPS / Ubuntu / Debian)
 ```bash

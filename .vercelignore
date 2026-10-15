@@ -1,0 +1,6 @@
+﻿.git
+.env
+.env.local
+.env.development
+tests
+node_modules

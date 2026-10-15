@@ -2,14 +2,14 @@
   "name": "toksnap",
   "version": "1.0.0",
   "description": "TokSnap - Modern & Secure TikTok Video Downloader",
-  "main": "api/index.js",
+  "main": "index.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "start": "node index.js",
+    "dev": "node --watch index.js",
     "test": "node --test tests/*.test.js"
   },
   "keywords": [

@@ -28,7 +28,7 @@ export function createApp() {
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           mediaSrc: ["'self'", 'https:', 'blob:'],
-          connectSrc: ["'self'"]
+          connectSrc: ["'self'", 'https:', 'data:', 'blob:']
         }
       },
       crossOriginEmbedderPolicy: false

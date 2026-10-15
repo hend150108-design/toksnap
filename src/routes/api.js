@@ -11,9 +11,14 @@ const ALLOWED_CDN_DOMAINS = [
   'tikwm.com',
   'tiktokcdn.com',
   'tiktokcdn-us.com',
+  'tiktokcdn-eu.com',
+  'tiktokcdn-in.com',
   'byteoversea.com',
   'ibytedtos.com',
-  'tiktok.com'
+  'tiktok.com',
+  'douyincdn.com',
+  'muscdn.com',
+  'musical.ly'
 ];
 
 /**

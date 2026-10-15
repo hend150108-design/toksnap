@@ -328,10 +328,177 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
+  function normalizeTikwmClientData(json) {
+    const data = json.data;
+    if (!data) throw new Error('Data video tidak ditemukan dalam respons penyedia.');
+
+    const baseUrl = 'https://www.tikwm.com';
+    const normalizeUrl = (link) => {
+      if (!link) return null;
+      if (link.startsWith('http://') || link.startsWith('https://')) return link;
+      return `${baseUrl}${link.startsWith('/') ? '' : '/'}${link}`;
+    };
+
+    const videoId = data.id || Date.now().toString();
+    const sanitizedTitle = (data.title || 'tiktok_video')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .substring(0, 30);
+
+    const downloads = [];
+
+    // HD Clean Video (Tanpa Watermark)
+    const hdUrl = normalizeUrl(data.hdplay || data.play);
+    if (hdUrl) {
+      downloads.push({
+        id: 'video_hd',
+        format: 'mp4',
+        label: 'Download Video HD',
+        description: 'Kualitas tertinggi tanpa watermark',
+        quality: 'HD',
+        url: hdUrl,
+        downloadUrl: hdUrl,
+        filename: `toksnap_${sanitizedTitle}_${videoId}_hd.mp4`
+      });
+    }
+
+    // Standard Video
+    const standardUrl = normalizeUrl(data.play);
+    if (standardUrl && standardUrl !== hdUrl) {
+      downloads.push({
+        id: 'video_sd',
+        format: 'mp4',
+        label: 'Download Video (SD)',
+        description: 'Format standar file lebih hemat data',
+        quality: 'SD',
+        url: standardUrl,
+        downloadUrl: standardUrl,
+        filename: `toksnap_${sanitizedTitle}_${videoId}.mp4`
+      });
+    }
+
+    // Watermarked Video
+    const wmUrl = normalizeUrl(data.wmplay);
+    if (wmUrl) {
+      downloads.push({
+        id: 'video_wm',
+        format: 'mp4',
+        label: 'Download Video (Watermark)',
+        description: 'Video asli dengan watermark resmi kreator',
+        quality: 'Standard',
+        url: wmUrl,
+        downloadUrl: wmUrl,
+        filename: `toksnap_${sanitizedTitle}_${videoId}_wm.mp4`
+      });
+    }
+
+    // Audio MP3
+    const musicUrl = normalizeUrl(data.music);
+    if (musicUrl) {
+      downloads.push({
+        id: 'audio_mp3',
+        format: 'mp3',
+        label: 'Download Audio (MP3)',
+        description: data.music_info?.title ? `Lagu: ${data.music_info.title}` : 'Ekstrak trek suara MP3 asli',
+        quality: '128kbps',
+        url: musicUrl,
+        downloadUrl: musicUrl,
+        filename: `toksnap_${sanitizedTitle}_${videoId}_audio.mp3`
+      });
+    }
+
+    // Slideshow Photos
+    if (Array.isArray(data.images) && data.images.length > 0) {
+      data.images.forEach((imgUrl, index) => {
+        const normImg = normalizeUrl(imgUrl);
+        if (normImg) {
+          downloads.push({
+            id: `slide_${index + 1}`,
+            format: 'jpg',
+            label: `Download Slide Foto #${index + 1}`,
+            description: `Foto slide resolusi asli`,
+            quality: 'HD',
+            url: normImg,
+            downloadUrl: normImg,
+            filename: `toksnap_${sanitizedTitle}_slide_${index + 1}.jpg`
+          });
+        }
+      });
+    }
+
+    return {
+      id: videoId,
+      title: data.title || 'Video TikTok',
+      author: {
+        name: data.author?.nickname || 'TikTok Creator',
+        username: data.author?.unique_id || '',
+        avatar: normalizeUrl(data.author?.avatar) || ''
+      },
+      cover: normalizeUrl(data.cover) || '',
+      duration: typeof data.duration === 'number' ? data.duration : null,
+      stats: {
+        views: data.play_count ?? null,
+        likes: data.digg_count ?? null,
+        comments: data.comment_count ?? null,
+        shares: data.share_count ?? null
+      },
+      downloads,
+      previewUrl: hdUrl || standardUrl,
+      directPreviewUrl: hdUrl || standardUrl
+    };
+  }
+
+  async function resolveViaClientEngine(url) {
+    // 1. Direct GET query to TikWM (CORS allowed on browser)
+    try {
+      const getApiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+      const res = await fetch(getApiUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.code === 0 && json.data) {
+          return normalizeTikwmClientData(json);
+        }
+      }
+    } catch (e) {
+      console.warn('Direct GET resolver failed, trying direct POST fallback...');
+    }
+
+    // 2. Direct POST query with form-urlencoded
+    const formData = new URLSearchParams();
+    formData.append('url', url);
+    formData.append('hd', '1');
+
+    const postRes = await fetch('https://www.tikwm.com/api/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept': 'application/json'
+      },
+      body: formData.toString()
+    });
+
+    if (!postRes.ok) {
+      throw new Error(`Penyedia layanan mengembalikan status ${postRes.status}.`);
+    }
+
+    const postJson = await postRes.json();
+    if (!postJson || postJson.code !== 0 || !postJson.data) {
+      throw new Error(postJson?.msg || 'Gagal memproses video. Pastikan link video publik dan valid.');
+    }
+
+    return normalizeTikwmClientData(postJson);
+  }
+
   async function processVideo(url) {
     hideNotification();
     setLoadingState(true);
 
+    let videoData = null;
+    let serverError = null;
+
+    // Phase 1: Try serverless backend
     try {
       const response = await fetch('/api/resolve', {
         method: 'POST',
@@ -343,24 +510,83 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const result = await response.json();
+      if (response.ok && result.success && result.data) {
+        videoData = result.data;
+      } else {
+        serverError = result.error || 'Server backend tidak dapat memproses permintaan';
+      }
+    } catch (err) {
+      serverError = err.message || 'Koneksi ke backend serverless terganggu';
+    }
 
-      if (!response.ok || !result.success) {
-        const errorMsg = result.error || 'Gagal memproses video. Periksa URL Anda dan coba lagi.';
-        showNotification('Gagal Memproses Video', errorMsg, 'error');
+    // Phase 2: If serverless is blocked (HTTP 403/502) or down, seamlessly fallback to client engine
+    if (!videoData) {
+      console.warn('Backend serverless resolve failed (' + serverError + '). Memulai mesin direct client resolver...');
+      try {
+        videoData = await resolveViaClientEngine(url);
+      } catch (clientErr) {
+        console.error('Client-side resolve error:', clientErr);
+        showNotification(
+          'Gagal Memproses Video',
+          clientErr.message || serverError || 'Gagal memproses video. Pastikan link video TikTok publik dan valid.',
+          'error'
+        );
+        setLoadingState(false);
         return;
       }
-
-      displayResult(result.data);
-      showToast('Video berhasil diproses! Silakan pilih format unduhan.');
-    } catch (err) {
-      showNotification(
-        'Koneksi Gagal',
-        'Tidak dapat terhubung ke server TokSnap. Pastikan koneksi internet stabil dan coba kembali.',
-        'error'
-      );
-    } finally {
-      setLoadingState(false);
     }
+
+    displayResult(videoData);
+    showToast('Video berhasil diproses! Silakan pilih format unduhan.');
+    setLoadingState(false);
+  }
+
+  async function triggerDirectDownload(e, dl, buttonElement) {
+    e.preventDefault();
+    const originalText = buttonElement.querySelector('.download-option-title')?.textContent || '';
+    const titleEl = buttonElement.querySelector('.download-option-title');
+    
+    if (titleEl) titleEl.textContent = 'Menyiapkan File...';
+    showToast(`Mengunduh: ${dl.filename}`);
+
+    const targetUrl = dl.url || dl.downloadUrl;
+
+    // Method A: Fetch as Blob to force exact filename save on desktop & Android
+    try {
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const tempA = document.createElement('a');
+        tempA.href = blobUrl;
+        tempA.download = dl.filename;
+        tempA.style.display = 'none';
+        document.body.appendChild(tempA);
+        tempA.click();
+        document.body.removeChild(tempA);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+
+        if (titleEl) titleEl.textContent = originalText;
+        showToast('Unduhan berhasil dimulai!');
+        return;
+      }
+    } catch (blobErr) {
+      console.log('Blob fetch bypassed due to CORS, continuing with direct download link...');
+    }
+
+    // Method B: Direct Anchor click fallback
+    const directA = document.createElement('a');
+    directA.href = targetUrl;
+    directA.download = dl.filename;
+    directA.target = '_blank';
+    directA.rel = 'noopener noreferrer';
+    directA.style.display = 'none';
+    document.body.appendChild(directA);
+    directA.click();
+    document.body.removeChild(directA);
+
+    if (titleEl) titleEl.textContent = originalText;
+    showToast('Tautan unduhan dibuka. Periksa bilah unduhan browser Anda!');
   }
 
   function displayResult(video) {
@@ -423,9 +649,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const optionLink = document.createElement('a');
         const isPrimary = index === 0;
         optionLink.className = `download-option-btn ${isPrimary ? 'primary-download' : ''}`;
-        optionLink.href = dl.downloadUrl || dl.url;
+        optionLink.href = dl.url || dl.downloadUrl;
         optionLink.setAttribute('download', dl.filename);
         optionLink.setAttribute('rel', 'noopener noreferrer');
+        optionLink.setAttribute('target', '_blank');
 
         optionLink.innerHTML = `
           <div class="download-option-left">
@@ -444,8 +671,19 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
 
+        optionLink.addEventListener('click', (e) => triggerDirectDownload(e, dl, optionLink));
         downloadOptionsContainer.appendChild(optionLink);
       });
+
+      // Add user-friendly tip for mobile browsers
+      const tipBox = document.createElement('div');
+      tipBox.className = 'download-helper-tip';
+      tipBox.style.cssText = 'margin-top: 1rem; padding: 0.85rem 1rem; border-radius: 12px; background: rgba(0,242,254,0.06); border: 1px solid rgba(0,242,254,0.2); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; gap: 0.5rem; align-items: flex-start;';
+      tipBox.innerHTML = `
+        <span style="font-size: 1.1rem; flex-shrink: 0;">💡</span>
+        <span><strong>Tips Download:</strong> File otomatis terunduh ke perangkat Anda. Jika video terbuka di tab baru pada browser ponsel, ketuk tombol <strong>⋮</strong> (titik tiga) lalu pilih <strong>Download</strong> atau tahan video dan pilih <strong>Simpan Video</strong>.</span>
+      `;
+      downloadOptionsContainer.appendChild(tipBox);
     } else {
       downloadOptionsContainer.innerHTML = `
         <div style="color: var(--text-secondary); font-size: 0.9rem; padding: 1rem 0;">

@@ -7,14 +7,44 @@
   <meta name="description" content="TokSnap: Snap Your Favorite Videos. Download video TikTok kualitas tinggi HD tanpa watermark dan simpan musik audio MP3 secara gratis, cepat, aman di semua perangkat.">
   <meta name="keywords" content="tiktok downloader, download video tiktok, unduh video tiktok tanpa watermark, tiktok mp3, toksnap">
   
+  <!-- Early Language Bootstrap to Prevent FOUC on Refresh -->
+  <script>
+    (function () {
+      try {
+        var savedLang = null;
+        var params = new URLSearchParams(window.location.search);
+        var qLang = (params.get('lang') || '').toLowerCase().trim();
+        if (qLang === 'en' || qLang === 'id') {
+          savedLang = qLang;
+        }
+        if (!savedLang) {
+          savedLang = localStorage.getItem('toksnap_language');
+        }
+        if (!savedLang) {
+          var m = document.cookie.match(/(?:^|;\s*)toksnap_language=([^;]+)/);
+          if (m) savedLang = decodeURIComponent(m[1]).toLowerCase();
+        }
+        if (!savedLang) {
+          var bLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+          if (bLang.startsWith('en')) savedLang = 'en';
+        }
+        if (savedLang === 'en') {
+          document.documentElement.lang = 'en';
+        } else {
+          document.documentElement.lang = 'id';
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="TokSnap — Snap Your Favorite Videos">
   <meta property="og:description" content="Download video TikTok tanpa watermark dengan kualitas HD dan ekstrak MP3 instan.">
-  <meta property="og:image" content="/assets/logo.svg">
+  <meta property="og:image" content="./assets/logo.svg">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
   
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +52,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Stylesheet with Cache Busting -->
-  <link rel="stylesheet" href="/css/style.css?v=3.2">
+  <link rel="stylesheet" href="./css/style.css?v=4.0">
 </head>
 <body>
   <!-- Aksesibilitas: Skip Link -->
@@ -33,7 +63,7 @@
     <div class="header-container">
       <a href="/" class="brand-link" aria-label="TokSnap Beranda">
         <div class="brand-icon">
-          <img src="/assets/logo.svg" alt="TokSnap Logo" width="34" height="34">
+          <img src="./assets/logo.svg" alt="TokSnap Logo" width="34" height="34">
         </div>
         <span class="brand-text">Tok<span>Snap</span></span>
       </a>
@@ -742,7 +772,7 @@
   </footer>
 
   <!-- Multi-Language Engine & Main App Script with Cache Busting -->
-  <script src="/js/i18n.js?v=1.0"></script>
-  <script src="/js/app.js?v=3.2"></script>
+  <script src="./js/i18n.js?v=4.0"></script>
+  <script src="./js/app.js?v=4.0"></script>
 </body>
 </html>

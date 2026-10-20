@@ -1886,23 +1886,21 @@ button, input {
 
   .mobile-lang-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.45rem;
-    max-height: 170px;
-    overflow-y: auto;
-    padding-right: 2px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem;
   }
 
   .mobile-lang-chip {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
     background: rgba(31, 41, 55, 0.75);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
-    padding: 0.45rem 0.5rem;
-    font-size: 0.775rem;
+    padding: 0.6rem 0.65rem;
+    font-size: 0.825rem;
+    font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);

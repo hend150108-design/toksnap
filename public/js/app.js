@@ -86,11 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Multi-Country Language Switcher Dropdown & Mobile Chips
+  // 2. Multi-Language Switcher (Indonesian & English) Dropdown & Mobile Chips
   function initLanguageDropdown() {
     if (!window.toksnapI18n) return;
     const languages = window.toksnapI18n.languages;
     const currentLang = window.toksnapI18n.getCurrentLanguage();
+    const langInfo = window.toksnapI18n.getLanguageInfo(currentLang);
+
+    // Sync header button flag & country code immediately
+    const currentFlagEl = document.getElementById('currentLangFlag');
+    const currentCodeEl = document.getElementById('currentLangCode');
+    if (currentFlagEl && langInfo) currentFlagEl.textContent = langInfo.flag;
+    if (currentCodeEl && langInfo) currentCodeEl.textContent = langInfo.country;
 
     // Populate Desktop Dropdown Menu
     if (langDropdownList) {
@@ -134,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chip.type = 'button';
         chip.className = `mobile-lang-chip ${lang.code === currentLang ? 'active' : ''}`;
         chip.setAttribute('data-lang', lang.code);
-        chip.innerHTML = `<span>${lang.flag}</span> <span>${lang.country}</span>`;
+        chip.innerHTML = `<span>${lang.flag}</span> <span>${lang.nativeName}</span>`;
         chip.title = lang.name;
 
         chip.addEventListener('click', () => {
@@ -175,7 +182,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Listen for language changes to update active result card elements dynamically
-  window.addEventListener('toksnap:languageChanged', () => {
+  window.addEventListener('toksnap:languageChanged', (e) => {
+    const lang = e.detail?.lang || (window.toksnapI18n ? window.toksnapI18n.getCurrentLanguage() : 'id');
+    const langInfo = e.detail?.langInfo || (window.toksnapI18n ? window.toksnapI18n.getLanguageInfo(lang) : null);
+
+    const currentFlagEl = document.getElementById('currentLangFlag');
+    const currentCodeEl = document.getElementById('currentLangCode');
+    if (currentFlagEl && langInfo) currentFlagEl.textContent = langInfo.flag;
+    if (currentCodeEl && langInfo) currentCodeEl.textContent = langInfo.country;
+
+    // Synchronize active states in dropdown
+    document.querySelectorAll('.lang-item-btn').forEach((btn) => {
+      const isMatch = btn.getAttribute('data-lang') === lang;
+      btn.classList.toggle('active', isMatch);
+      btn.setAttribute('aria-selected', String(isMatch));
+      const check = btn.querySelector('.lang-check-icon');
+      if (check) check.style.visibility = isMatch ? 'visible' : 'hidden';
+    });
+
+    // Synchronize mobile chips
+    document.querySelectorAll('.mobile-lang-chip').forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-lang') === lang);
+    });
+
     // Re-render result download buttons if currently shown
     if (lastVideoData && resultSection && !resultSection.classList.contains('hidden')) {
       displayResult(lastVideoData);
@@ -336,7 +365,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawUrl = urlInput.value.trim();
 
     if (!rawUrl) {
-      showNotification('Input Kosong', translate('err_empty_url', 'Harap masukkan tautan video TikTok terlebih dahulu.'), 'error');
+      showNotification(
+        translate('err_title_empty', 'Input Kosong'),
+        translate('err_empty_url', 'Harap masukkan tautan video TikTok terlebih dahulu.'),
+        'error'
+      );
       urlInput.focus();
       return;
     }
@@ -344,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Client-side quick check
     if (!rawUrl.includes('tiktok.com') && !rawUrl.includes('douyin.com')) {
       showNotification(
-        'Format URL Tidak Sesuai',
+        translate('err_title_invalid', 'Format URL Tidak Sesuai'),
         translate('err_invalid_url', 'URL harus berasal dari tiktok.com (contoh: https://www.tiktok.com/@user/video/123 atau https://vt.tiktok.com/ZS...).'),
         'error'
       );

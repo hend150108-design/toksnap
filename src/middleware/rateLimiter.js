@@ -6,6 +6,7 @@ export const resolveRateLimiter = rateLimit({
   max: config.rateLimit.maxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     success: false,
     error: 'Terlalu banyak permintaan dalam waktu singkat. Harap tunggu 1 menit sebelum mencoba kembali.',
@@ -15,9 +16,11 @@ export const resolveRateLimiter = rateLimit({
 
 export const downloadRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  skip: (req) => Boolean((req.query.inline === '1' || req.query.inline === 'true') && req.headers.range),
   message: {
     success: false,
     error: 'Batas download tercapai. Harap tunggu sebentar.',

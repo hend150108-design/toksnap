@@ -12,71 +12,81 @@ export class TikwmAdapter extends BaseAdapter {
    * @param {string} url
    */
   async resolve(url) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.requestTimeoutMs);
+    try {
+      const timeoutMs = config.requestTimeoutMs || 15000;
+      const perAttemptTimeout = Math.max(5000, Math.floor(timeoutMs / 2));
 
-    const browserHeaders = {
+    const standardHeaders = {
       'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Origin': 'https://www.tikwm.com',
-      'Referer': 'https://www.tikwm.com/',
-      'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-      'Sec-Ch-Ua-Mobile': '?0',
-      'Sec-Ch-Ua-Platform': '"Windows"',
-      'Sec-Fetch-Dest': 'empty',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-      'X-Requested-With': 'XMLHttpRequest'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*'
     };
 
-    try {
-      let response;
-      let lastStatus = 0;
-
-      // Attempt 1: POST request with URLSearchParams
-      try {
-        const formData = new URLSearchParams();
-        formData.append('url', url);
-        formData.append('hd', '1');
-
-        response = await fetch(this.apiUrl, {
-          method: 'POST',
-          headers: {
-            ...browserHeaders,
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-          },
-          body: formData.toString(),
-          signal: controller.signal
-        });
-        lastStatus = response.status;
-      } catch (err) {
-        if (err.name === 'AbortError') throw err;
-        response = null;
-      }
-
-      // Attempt 2: Fallback to GET request if POST was blocked (e.g. HTTP 403 / 502)
-      if (!response || !response.ok) {
-        try {
-          const getUrl = `${this.apiUrl}?url=${encodeURIComponent(url)}&hd=1`;
-          response = await fetch(getUrl, {
-            method: 'GET',
-            headers: browserHeaders,
-            signal: controller.signal
-          });
-          lastStatus = response.status;
-        } catch (err) {
-          if (err.name === 'AbortError') throw err;
+    const endpoints = [
+      {
+        url: this.apiUrl,
+        method: 'POST',
+        headers: {
+          ...standardHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        getBody: () => {
+          const fd = new URLSearchParams();
+          fd.append('url', url);
+          fd.append('hd', '1');
+          return fd.toString();
         }
+      },
+      {
+        url: `${this.apiUrl}?url=${encodeURIComponent(url)}&hd=1`,
+        method: 'GET',
+        headers: standardHeaders,
+        getBody: () => undefined
+      },
+      {
+        url: `https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`,
+        method: 'GET',
+        headers: standardHeaders,
+        getBody: () => undefined
       }
+    ];
 
-      if (!response || !response.ok) {
+    let response = null;
+    let lastStatus = 0;
+    let lastErrorMessage = '';
+
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(ep.url, {
+          method: ep.method,
+          headers: ep.headers,
+          body: ep.getBody(),
+          signal: AbortSignal.timeout(perAttemptTimeout)
+        });
+
+        lastStatus = res.status;
+        if (res.ok) {
+          response = res;
+          break;
+        }
+      } catch (err) {
+        lastErrorMessage = err.message || '';
+        // If aborted or connection failed on this endpoint, continue to next mirror
+      }
+    }
+
+    if (!response || !response.ok) {
+      if (lastErrorMessage.includes('timeout') || lastErrorMessage.includes('aborted')) {
         throw new DownloaderServiceError(
-          `Layanan penyedia TikWM merespons dengan status HTTP ${lastStatus || 502}`,
-          502
+          'Permintaan ke layanan TikTok timeout (waktu habis). Silakan coba beberapa saat lagi.',
+          504
         );
       }
+      throw new DownloaderServiceError(
+        `Layanan penyedia TikWM merespons dengan status HTTP ${lastStatus || 502}`,
+        502
+      );
+    }
 
       const json = await response.json();
 
@@ -194,7 +204,7 @@ export class TikwmAdapter extends BaseAdapter {
         downloads
       };
     } catch (err) {
-      if (err.name === 'AbortError') {
+      if (err.name === 'AbortError' || err.name === 'TimeoutError') {
         throw new DownloaderServiceError('Permintaan ke layanan TikTok timeout (waktu habis). Silakan coba beberapa saat lagi.', 504);
       }
       if (err instanceof DownloaderServiceError) {
@@ -204,8 +214,6 @@ export class TikwmAdapter extends BaseAdapter {
         `Gagal menghubungi penyedia pemrosesan video: ${err.message}`,
         502
       );
-    } finally {
-      clearTimeout(timeout);
     }
   }
 }

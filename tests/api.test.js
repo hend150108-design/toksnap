@@ -1,9 +1,11 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateTikTokUrl, ValidationError } from '../src/validators/videoUrl.js';
+import { BaseAdapter, DownloaderServiceError } from '../src/services/adapters/baseAdapter.js';
 import { RapidApiAdapter } from '../src/services/adapters/rapidApiAdapter.js';
 import { downloaderService } from '../src/services/downloader.js';
 import { createApp } from '../src/app.js';
+import { config } from '../src/config/index.js';
 
 describe('1. TikTok URL Validator & SSRF Prevention', () => {
   test('should accept valid standard TikTok video URL', () => {
@@ -187,3 +189,197 @@ describe('3. API Server Integration Endpoints', () => {
     assert.equal(json.success, false);
   });
 });
+
+describe('4. Sequential Request Resilience & Error Isolation', () => {
+  let app;
+  let server;
+  let baseUrl;
+  let originalGetAdapter;
+
+  before(async () => {
+    app = createApp();
+    await new Promise((resolve) => {
+      server = app.listen(0, () => {
+        const port = server.address().port;
+        baseUrl = `http://127.0.0.1:${port}`;
+        resolve();
+      });
+    });
+
+    // Mock adapter for deterministic resolution tests
+    class MockResilientAdapter extends BaseAdapter {
+      constructor() {
+        super('mock');
+        this.callCount = 0;
+      }
+      async resolve(url) {
+        this.callCount++;
+        if (url.includes('should-fail-422')) {
+          throw new DownloaderServiceError('Video TikTok ini bersifat privat atau telah dihapus.', 422);
+        }
+        if (url.includes('should-timeout')) {
+          throw new DownloaderServiceError('Permintaan ke layanan TikTok timeout (waktu habis). Silakan coba beberapa saat lagi.', 504);
+        }
+        return {
+          id: `mock_video_${this.callCount}`,
+          title: `Video Test #${this.callCount}`,
+          author: { name: 'Creator', username: 'creator', avatar: 'https://p16.tiktokcdn.com/avatar.jpg' },
+          cover: 'https://p16.tiktokcdn.com/cover.jpg',
+          duration: 15,
+          stats: { views: 100, likes: 10, comments: 2, shares: 1 },
+          downloads: [
+            {
+              id: 'video_hd',
+              format: 'mp4',
+              label: 'Download Video HD',
+              quality: 'HD',
+              url: 'https://v16.tiktokcdn.com/video_hd.mp4',
+              filename: `toksnap_video_${this.callCount}_hd.mp4`
+            },
+            {
+              id: 'audio_mp3',
+              format: 'mp3',
+              label: 'Download Audio MP3',
+              quality: '128kbps',
+              url: 'https://v16.tiktokcdn.com/audio.mp3',
+              filename: `toksnap_audio_${this.callCount}.mp3`
+            }
+          ]
+        };
+      }
+    }
+
+    const mock = new MockResilientAdapter();
+    downloaderService.registerAdapter('tikwm', mock);
+  });
+
+  after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+  });
+
+  test('Sequential Request 1: Valid URL resolves successfully with enhanced proxy URLs', async () => {
+    const res = await fetch(`${baseUrl}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.tiktok.com/@user/video/7189123456789012345' })
+    });
+
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.success, true);
+    assert.equal(json.data.id, 'mock_video_1');
+    assert.equal(json.data.downloads.length, 2);
+    // Verify enhanced proxy downloadUrl
+    assert.ok(json.data.downloads[0].downloadUrl.startsWith('/api/download?url='));
+    assert.ok(json.data.downloads[0].url.startsWith('https://v16.tiktokcdn.com'));
+    assert.ok(json.data.previewUrl.startsWith('/api/download?url='));
+  });
+
+  test('Sequential Request 2: Failed validation does NOT corrupt state for subsequent requests', async () => {
+    const res = await fetch(`${baseUrl}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://not-tiktok.com/invalid' })
+    });
+
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.success, false);
+  });
+
+  test('Sequential Request 3: Follow-up valid URL immediately succeeds after previous error', async () => {
+    const res = await fetch(`${baseUrl}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.tiktok.com/@user/video/7189123456789012346' })
+    });
+
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.success, true);
+    assert.equal(json.data.id, 'mock_video_2');
+  });
+
+  test('Sequential Request 4: Upstream provider 422 error is isolated cleanly', async () => {
+    const res = await fetch(`${baseUrl}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.tiktok.com/@user/video/7189123456789012345?should-fail-422=1' })
+    });
+
+    assert.equal(res.status, 422);
+    const json = await res.json();
+    assert.equal(json.success, false);
+    assert.ok(json.error.includes('privat atau telah dihapus'));
+  });
+
+  test('Sequential Request 5: Valid request after 422 still succeeds flawlessly', async () => {
+    const res = await fetch(`${baseUrl}/api/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.tiktok.com/@user/video/7189123456789012347' })
+    });
+
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.success, true);
+    assert.equal(json.data.id, 'mock_video_4');
+  });
+});
+
+describe('5. DownloaderService Fallback Logic & Error Handling', () => {
+  test('DownloaderService falls back to RapidAPI when primary fails and key is set', async () => {
+    const dummyService = new (downloaderService.constructor)();
+    
+    class FailingPrimaryAdapter extends BaseAdapter {
+      constructor() { super('failing_primary'); }
+      async resolve() { throw new DownloaderServiceError('TikWM server down', 502); }
+    }
+
+    class WorkingRapidAdapter extends BaseAdapter {
+      constructor() { super('rapidapi'); }
+      async resolve() { return { id: 'rapid_success', downloads: [] }; }
+    }
+
+    dummyService.registerAdapter('tikwm', new FailingPrimaryAdapter());
+    dummyService.registerAdapter('rapidapi', new WorkingRapidAdapter());
+    dummyService.defaultAdapterName = 'tikwm';
+
+    // Temporarily set dummy rapidApiKey in config
+    const origKey = config.rapidApiKey;
+    config.rapidApiKey = 'test_dummy_key';
+
+    const result = await dummyService.resolveVideo('https://www.tiktok.com/@user/video/123');
+    assert.equal(result.id, 'rapid_success');
+
+    // Restore original key
+    config.rapidApiKey = origKey;
+  });
+
+  test('DownloaderService propagates primary error when RapidAPI key is empty', async () => {
+    const dummyService = new (downloaderService.constructor)();
+
+    class FailingTikwmAdapter extends BaseAdapter {
+      constructor() { super('tikwm'); }
+      async resolve() { throw new DownloaderServiceError('Primary error', 502); }
+    }
+
+    dummyService.registerAdapter('tikwm', new FailingTikwmAdapter());
+    dummyService.defaultAdapterName = 'tikwm';
+
+    const origKey = config.rapidApiKey;
+    config.rapidApiKey = '';
+
+    await assert.rejects(
+      async () => {
+        await dummyService.resolveVideo('https://www.tiktok.com/@user/video/123');
+      },
+      (err) => {
+        return err.name === 'DownloaderServiceError' && err.statusCode === 502 && err.message === 'Primary error';
+      }
+    );
+
+    config.rapidApiKey = origKey;
+  });
+});
+

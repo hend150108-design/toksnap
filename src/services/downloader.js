@@ -28,8 +28,24 @@ class DownloaderService {
   }
 
   async resolveVideo(url, adapterName = null) {
-    const adapter = this.getAdapter(adapterName);
-    return await adapter.resolve(url);
+    const primaryName = (adapterName || this.defaultAdapterName).toLowerCase();
+    const adapter = this.getAdapter(primaryName);
+
+    try {
+      return await adapter.resolve(url);
+    } catch (primaryErr) {
+      // Seamless fallback to RapidAPI if primary adapter (e.g. tikwm) fails and RAPIDAPI_KEY is configured
+      if (primaryName === 'tikwm' && config.rapidApiKey && this.adapters.has('rapidapi')) {
+        try {
+          console.warn(`[DownloaderService] Adapter '${primaryName}' gagal: ${primaryErr.message}. Mencoba fallback ke RapidAPI...`);
+          const rapidAdapter = this.adapters.get('rapidapi');
+          return await rapidAdapter.resolve(url);
+        } catch (fallbackErr) {
+          console.error(`[DownloaderService] Fallback ke RapidAPI juga gagal: ${fallbackErr.message}`);
+        }
+      }
+      throw primaryErr;
+    }
   }
 }
 

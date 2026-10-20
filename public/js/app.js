@@ -1,5 +1,6 @@
 /**
  * TokSnap - Frontend Application Logic
+ * Supports Sequential Navigation Tracking & Multi-Language Switching
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,6 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const hamburgerBtn = document.getElementById('hamburgerBtn');
   const navMenu = document.getElementById('navMenu');
 
+  // Language Dropdown References
+  const langDropdownBtn = document.getElementById('langDropdownBtn');
+  const langDropdownMenu = document.getElementById('langDropdownMenu');
+  const langDropdownList = document.getElementById('langDropdownList');
+  const mobileLangGrid = document.getElementById('mobileLangGrid');
+
   // Video Preview Player Elements
   const thumbnailWrapper = document.getElementById('thumbnailWrapper');
   const playPreviewBtn = document.getElementById('playPreviewBtn');
@@ -50,12 +57,24 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPreviewUrl = '';
   let currentDirectVideoUrl = '';
   let isUsingFallback = false;
+  let lastVideoData = null;
+
+  // Translation helper
+  const translate = (key, fallback = '') => {
+    if (window.toksnapI18n && typeof window.toksnapI18n.t === 'function') {
+      return window.toksnapI18n.t(key, fallback);
+    }
+    return fallback || key;
+  };
 
   // 1. Mobile Menu Toggle
   if (hamburgerBtn && navMenu) {
     hamburgerBtn.addEventListener('click', () => {
       const isOpen = navMenu.classList.toggle('open');
       hamburgerBtn.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) {
+        closeLanguageDropdown();
+      }
     });
 
     // Close on link click
@@ -67,7 +86,154 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Input change handlers (Show/Hide Clear Button)
+  // 2. Multi-Country Language Switcher Dropdown & Mobile Chips
+  function initLanguageDropdown() {
+    if (!window.toksnapI18n) return;
+    const languages = window.toksnapI18n.languages;
+    const currentLang = window.toksnapI18n.getCurrentLanguage();
+
+    // Populate Desktop Dropdown Menu
+    if (langDropdownList) {
+      langDropdownList.innerHTML = '';
+      languages.forEach((lang) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `lang-item-btn ${lang.code === currentLang ? 'active' : ''}`;
+        btn.setAttribute('data-lang', lang.code);
+        btn.setAttribute('role', 'menuitem');
+        btn.setAttribute('aria-selected', String(lang.code === currentLang));
+
+        btn.innerHTML = `
+          <div class="lang-item-content">
+            <span class="lang-item-flag">${lang.flag}</span>
+            <span class="lang-item-name">${lang.name}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <span class="lang-item-code">${lang.country}</span>
+            <span class="lang-check-icon" style="visibility: ${lang.code === currentLang ? 'visible' : 'hidden'}">✓</span>
+          </div>
+        `;
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.toksnapI18n.setLanguage(lang.code);
+          closeLanguageDropdown();
+          if (navMenu) navMenu.classList.remove('open');
+          if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
+        });
+
+        langDropdownList.appendChild(btn);
+      });
+    }
+
+    // Populate Mobile Grid Chips
+    if (mobileLangGrid) {
+      mobileLangGrid.innerHTML = '';
+      languages.forEach((lang) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `mobile-lang-chip ${lang.code === currentLang ? 'active' : ''}`;
+        chip.setAttribute('data-lang', lang.code);
+        chip.innerHTML = `<span>${lang.flag}</span> <span>${lang.country}</span>`;
+        chip.title = lang.name;
+
+        chip.addEventListener('click', () => {
+          window.toksnapI18n.setLanguage(lang.code);
+          if (navMenu) navMenu.classList.remove('open');
+          if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
+        });
+
+        mobileLangGrid.appendChild(chip);
+      });
+    }
+
+    // Dropdown toggle logic
+    if (langDropdownBtn && langDropdownMenu) {
+      langDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = langDropdownMenu.classList.toggle('show');
+        langDropdownBtn.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#langSelectorDropdown')) {
+          closeLanguageDropdown();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeLanguageDropdown();
+        }
+      });
+    }
+  }
+
+  function closeLanguageDropdown() {
+    if (langDropdownMenu) langDropdownMenu.classList.remove('show');
+    if (langDropdownBtn) langDropdownBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  // Listen for language changes to update active result card elements dynamically
+  window.addEventListener('toksnap:languageChanged', () => {
+    // Re-render result download buttons if currently shown
+    if (lastVideoData && resultSection && !resultSection.classList.contains('hidden')) {
+      displayResult(lastVideoData);
+    }
+  });
+
+  // Initialize Language Switcher
+  initLanguageDropdown();
+
+  // 3. Sequential Navigation Tracking (ScrollSpy 01 -> 05)
+  const navLinks = document.querySelectorAll('.nav-link[data-nav-target]');
+  const sectionIds = ['beranda', 'cara-penggunaan', 'keunggulan', 'faq', 'tentang'];
+
+  function updateActiveNavLink(targetId) {
+    navLinks.forEach((link) => {
+      const isMatch = link.getAttribute('data-nav-target') === targetId;
+      link.classList.toggle('active', isMatch);
+      if (isMatch) {
+        link.setAttribute('aria-current', 'page');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      const targetId = link.getAttribute('data-nav-target');
+      if (targetId) {
+        updateActiveNavLink(targetId);
+      }
+      if (navMenu) navMenu.classList.remove('open');
+      if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  if ('IntersectionObserver' in window) {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -55% 0px',
+      threshold: [0, 0.2]
+    };
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          updateActiveNavLink(entry.target.id);
+        }
+      });
+    }, observerOptions);
+
+    sectionIds.forEach((id) => {
+      const sectionEl = document.getElementById(id);
+      if (sectionEl) sectionObserver.observe(sectionEl);
+    });
+  }
+
+  // 4. Input change handlers (Show/Hide Clear Button)
   const updateInputControls = () => {
     if (urlInput.value.trim().length > 0) {
       clearBtn.style.display = 'inline-flex';
@@ -88,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hideNotification();
   });
 
-  // 4. Drag and Drop Link Handling
+  // 5. Drag and Drop Link Handling
   if (dropZoneArea) {
     ['dragenter', 'dragover'].forEach((eventName) => {
       dropZoneArea.addEventListener(eventName, (e) => {
@@ -115,12 +281,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateInputControls();
         hideNotification();
         urlInput.focus();
-        showToast('Link berhasil ditempelkan!');
+        showToast(translate('toast_link_copied', 'Link berhasil ditempelkan!'));
       }
     });
   }
 
-  // 5. Clipboard Paste
+  // 6. Clipboard Paste
   pasteBtn.addEventListener('click', async () => {
     try {
       if (!navigator.clipboard || !navigator.clipboard.readText) {
@@ -130,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!text || text.trim() === '') {
         showNotification(
           'Clipboard Kosong',
-          'Tidak ada teks yang disalin pada clipboard Anda. Salin tautan video dari TikTok terlebih dahulu.',
+          translate('err_empty_url', 'Tidak ada teks pada clipboard. Salin tautan video dari TikTok terlebih dahulu.'),
           'info'
         );
         return;
@@ -139,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateInputControls();
       hideNotification();
       urlInput.focus();
-      showToast('Tautan berhasil ditempelkan dari clipboard!');
+      showToast(translate('toast_link_copied', 'Tautan berhasil ditempelkan!'));
     } catch (err) {
       showNotification(
         'Izin Clipboard',
@@ -149,28 +315,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6. Copy Caption
+  // 7. Copy Caption
   if (copyCaptionBtn) {
     copyCaptionBtn.addEventListener('click', async () => {
       const text = resultCaption.textContent;
       if (text && text !== '-') {
         try {
           await navigator.clipboard.writeText(text);
-          showToast('Deskripsi video berhasil disalin ke clipboard!');
+          showToast(translate('toast_caption_copied', 'Deskripsi video berhasil disalin ke clipboard!'));
         } catch {
-          showToast('Gagal menyalin deskripsi.');
+          showToast(translate('toast_copy_failed', 'Gagal menyalin deskripsi.'));
         }
       }
     });
   }
 
-  // 7. Form Submit
+  // 8. Form Submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const rawUrl = urlInput.value.trim();
 
     if (!rawUrl) {
-      showNotification('Input Kosong', 'Harap masukkan tautan video TikTok terlebih dahulu.', 'error');
+      showNotification('Input Kosong', translate('err_empty_url', 'Harap masukkan tautan video TikTok terlebih dahulu.'), 'error');
       urlInput.focus();
       return;
     }
@@ -179,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rawUrl.includes('tiktok.com') && !rawUrl.includes('douyin.com')) {
       showNotification(
         'Format URL Tidak Sesuai',
-        'URL harus berasal dari tiktok.com (contoh: https://www.tiktok.com/@user/video/123 atau https://vt.tiktok.com/ZS...).',
+        translate('err_invalid_url', 'URL harus berasal dari tiktok.com (contoh: https://www.tiktok.com/@user/video/123 atau https://vt.tiktok.com/ZS...).'),
         'error'
       );
       return;
@@ -188,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await processVideo(rawUrl);
   });
 
-  // 8. Video Player Playback Functions
+  // 9. Video Player Playback Functions
   function stopAndResetPlayer() {
     if (previewVideoPlayer) {
       previewVideoPlayer.pause();
@@ -201,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function startVideoPlayback() {
     if (!currentPreviewUrl && !currentDirectVideoUrl) {
-      showToast('Pratinjau video tidak tersedia untuk diputar.');
+      showToast(translate('no_options_found', 'Pratinjau video tidak tersedia untuk diputar.'));
       return;
     }
 
@@ -216,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playPromise = previewVideoPlayer.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // Autoplay may be blocked by browser policy, user can tap native play control
+        // Autoplay handled by native user tap
       });
     }
   }
@@ -232,7 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (previewVideoPlayer) {
-    // If upstream proxy has a streaming issue, seamlessly fall back to direct link
     previewVideoPlayer.addEventListener('error', () => {
       if (!isUsingFallback && currentDirectVideoUrl && currentDirectVideoUrl !== currentPreviewUrl) {
         console.warn('Proxy streaming error, switching to direct URL fallback...');
@@ -244,10 +409,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. Reset Search
+  // 10. Reset Search
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       stopAndResetPlayer();
+      lastVideoData = null;
       resultSection.classList.add('hidden');
       urlInput.value = '';
       updateInputControls();
@@ -257,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 9. FAQ Accordion Toggle
+  // 11. FAQ Accordion Toggle
   document.querySelectorAll('.faq-question-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const parentItem = button.closest('.faq-item');
@@ -284,11 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
     urlInput.disabled = isLoading;
 
     if (isLoading) {
-      submitBtnText.textContent = 'Memproses...';
+      submitBtnText.textContent = translate('btn_downloading', 'Memproses...');
       submitSpinner.style.display = 'inline-block';
       submitIcon.style.display = 'none';
     } else {
-      submitBtnText.textContent = 'Download Sekarang';
+      submitBtnText.textContent = translate('btn_download', 'Download Sekarang');
       submitSpinner.style.display = 'none';
       submitIcon.style.display = 'inline-block';
     }
@@ -318,7 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (num === null || num === undefined) return '-';
     if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    return num.toLocaleString('id-ID');
+    const lang = window.toksnapI18n ? window.toksnapI18n.getCurrentLanguage() : 'id';
+    return num.toLocaleString(lang === 'id' ? 'id-ID' : 'en-US');
   }
 
   function formatDuration(seconds) {
@@ -328,177 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
-  function normalizeTikwmClientData(json) {
-    const data = json.data;
-    if (!data) throw new Error('Data video tidak ditemukan dalam respons penyedia.');
-
-    const baseUrl = 'https://www.tikwm.com';
-    const normalizeUrl = (link) => {
-      if (!link) return null;
-      if (link.startsWith('http://') || link.startsWith('https://')) return link;
-      return `${baseUrl}${link.startsWith('/') ? '' : '/'}${link}`;
-    };
-
-    const videoId = data.id || Date.now().toString();
-    const sanitizedTitle = (data.title || 'tiktok_video')
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .substring(0, 30);
-
-    const downloads = [];
-
-    // HD Clean Video (Tanpa Watermark)
-    const hdUrl = normalizeUrl(data.hdplay || data.play);
-    if (hdUrl) {
-      downloads.push({
-        id: 'video_hd',
-        format: 'mp4',
-        label: 'Download Video HD',
-        description: 'Kualitas tertinggi tanpa watermark',
-        quality: 'HD',
-        url: hdUrl,
-        downloadUrl: hdUrl,
-        filename: `toksnap_${sanitizedTitle}_${videoId}_hd.mp4`
-      });
-    }
-
-    // Standard Video
-    const standardUrl = normalizeUrl(data.play);
-    if (standardUrl && standardUrl !== hdUrl) {
-      downloads.push({
-        id: 'video_sd',
-        format: 'mp4',
-        label: 'Download Video (SD)',
-        description: 'Format standar file lebih hemat data',
-        quality: 'SD',
-        url: standardUrl,
-        downloadUrl: standardUrl,
-        filename: `toksnap_${sanitizedTitle}_${videoId}.mp4`
-      });
-    }
-
-    // Watermarked Video
-    const wmUrl = normalizeUrl(data.wmplay);
-    if (wmUrl) {
-      downloads.push({
-        id: 'video_wm',
-        format: 'mp4',
-        label: 'Download Video (Watermark)',
-        description: 'Video asli dengan watermark resmi kreator',
-        quality: 'Standard',
-        url: wmUrl,
-        downloadUrl: wmUrl,
-        filename: `toksnap_${sanitizedTitle}_${videoId}_wm.mp4`
-      });
-    }
-
-    // Audio MP3
-    const musicUrl = normalizeUrl(data.music);
-    if (musicUrl) {
-      downloads.push({
-        id: 'audio_mp3',
-        format: 'mp3',
-        label: 'Download Audio (MP3)',
-        description: data.music_info?.title ? `Lagu: ${data.music_info.title}` : 'Ekstrak trek suara MP3 asli',
-        quality: '128kbps',
-        url: musicUrl,
-        downloadUrl: musicUrl,
-        filename: `toksnap_${sanitizedTitle}_${videoId}_audio.mp3`
-      });
-    }
-
-    // Slideshow Photos
-    if (Array.isArray(data.images) && data.images.length > 0) {
-      data.images.forEach((imgUrl, index) => {
-        const normImg = normalizeUrl(imgUrl);
-        if (normImg) {
-          downloads.push({
-            id: `slide_${index + 1}`,
-            format: 'jpg',
-            label: `Download Slide Foto #${index + 1}`,
-            description: `Foto slide resolusi asli`,
-            quality: 'HD',
-            url: normImg,
-            downloadUrl: normImg,
-            filename: `toksnap_${sanitizedTitle}_slide_${index + 1}.jpg`
-          });
-        }
-      });
-    }
-
-    return {
-      id: videoId,
-      title: data.title || 'Video TikTok',
-      author: {
-        name: data.author?.nickname || 'TikTok Creator',
-        username: data.author?.unique_id || '',
-        avatar: normalizeUrl(data.author?.avatar) || ''
-      },
-      cover: normalizeUrl(data.cover) || '',
-      duration: typeof data.duration === 'number' ? data.duration : null,
-      stats: {
-        views: data.play_count ?? null,
-        likes: data.digg_count ?? null,
-        comments: data.comment_count ?? null,
-        shares: data.share_count ?? null
-      },
-      downloads,
-      previewUrl: hdUrl || standardUrl,
-      directPreviewUrl: hdUrl || standardUrl
-    };
-  }
-
-  async function resolveViaClientEngine(url) {
-    // 1. Direct GET query to TikWM (CORS allowed on browser)
-    try {
-      const getApiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
-      const res = await fetch(getApiUrl, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json && json.code === 0 && json.data) {
-          return normalizeTikwmClientData(json);
-        }
-      }
-    } catch (e) {
-      console.warn('Direct GET resolver failed, trying direct POST fallback...');
-    }
-
-    // 2. Direct POST query with form-urlencoded
-    const formData = new URLSearchParams();
-    formData.append('url', url);
-    formData.append('hd', '1');
-
-    const postRes = await fetch('https://www.tikwm.com/api/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'Accept': 'application/json'
-      },
-      body: formData.toString()
-    });
-
-    if (!postRes.ok) {
-      throw new Error(`Penyedia layanan mengembalikan status ${postRes.status}.`);
-    }
-
-    const postJson = await postRes.json();
-    if (!postJson || postJson.code !== 0 || !postJson.data) {
-      throw new Error(postJson?.msg || 'Gagal memproses video. Pastikan link video publik dan valid.');
-    }
-
-    return normalizeTikwmClientData(postJson);
-  }
-
   async function processVideo(url) {
     hideNotification();
     setLoadingState(true);
 
-    let videoData = null;
-    let serverError = null;
-
-    // Phase 1: Try serverless backend
     try {
       const response = await fetch('/api/resolve', {
         method: 'POST',
@@ -509,51 +509,45 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ url })
       });
 
-      const result = await response.json();
-      if (response.ok && result.success && result.data) {
-        videoData = result.data;
-      } else {
-        serverError = result.error || 'Server backend tidak dapat memproses permintaan';
-      }
-    } catch (err) {
-      serverError = err.message || 'Koneksi ke backend serverless terganggu';
-    }
+      const result = await response.json().catch(() => null);
 
-    // Phase 2: If serverless is blocked (HTTP 403/502) or down, seamlessly fallback to client engine
-    if (!videoData) {
-      console.warn('Backend serverless resolve failed (' + serverError + '). Memulai mesin direct client resolver...');
-      try {
-        videoData = await resolveViaClientEngine(url);
-      } catch (clientErr) {
-        console.error('Client-side resolve error:', clientErr);
+      if (response.ok && result && result.success && result.data) {
+        lastVideoData = result.data;
+        displayResult(result.data);
+        showToast(translate('toast_processed_success', 'Video berhasil diproses! Silakan pilih format unduhan.'));
+      } else {
+        const errorMsg = result?.error || `Server merespons dengan status ${response.status}. Pastikan link video TikTok publik dan valid.`;
         showNotification(
-          'Gagal Memproses Video',
-          clientErr.message || serverError || 'Gagal memproses video. Pastikan link video TikTok publik dan valid.',
+          translate('err_process_failed', 'Gagal Memproses Video'),
+          errorMsg,
           'error'
         );
-        setLoadingState(false);
-        return;
       }
+    } catch (err) {
+      showNotification(
+        translate('err_process_failed', 'Gagal Memproses Video'),
+        translate('err_network', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi.'),
+        'error'
+      );
+    } finally {
+      setLoadingState(false);
     }
-
-    displayResult(videoData);
-    showToast('Video berhasil diproses! Silakan pilih format unduhan.');
-    setLoadingState(false);
   }
 
   async function triggerDirectDownload(e, dl, buttonElement) {
     e.preventDefault();
     const originalText = buttonElement.querySelector('.download-option-title')?.textContent || '';
     const titleEl = buttonElement.querySelector('.download-option-title');
-    
-    if (titleEl) titleEl.textContent = 'Menyiapkan File...';
-    showToast(`Mengunduh: ${dl.filename}`);
 
-    const targetUrl = dl.url || dl.downloadUrl;
+    if (titleEl) titleEl.textContent = translate('toast_preparing_file', 'Menyiapkan File...');
+    showToast(`${translate('toast_downloading', 'Mengunduh: ')}${dl.filename}`);
 
-    // Method A: Fetch as Blob to force exact filename save on desktop & Android
+    const preferredUrl = dl.downloadUrl || dl.url;
+    const directFallbackUrl = dl.url;
+
     try {
-      const res = await fetch(targetUrl);
+      // Method A: Fetch as Blob via same-origin proxy for exact filename save
+      const res = await fetch(preferredUrl);
       if (res.ok) {
         const blob = await res.blob();
         const blobUrl = URL.createObjectURL(blob);
@@ -564,29 +558,34 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(tempA);
         tempA.click();
         document.body.removeChild(tempA);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 20000);
 
-        if (titleEl) titleEl.textContent = originalText;
-        showToast('Unduhan berhasil dimulai!');
+        showToast(translate('toast_download_started', 'Unduhan berhasil dimulai!'));
         return;
       }
     } catch (blobErr) {
-      console.log('Blob fetch bypassed due to CORS, continuing with direct download link...');
+      console.warn('Blob fetch fallback triggered:', blobErr.message);
+    } finally {
+      if (titleEl) titleEl.textContent = originalText;
     }
 
-    // Method B: Direct Anchor click fallback
-    const directA = document.createElement('a');
-    directA.href = targetUrl;
-    directA.download = dl.filename;
-    directA.target = '_blank';
-    directA.rel = 'noopener noreferrer';
-    directA.style.display = 'none';
-    document.body.appendChild(directA);
-    directA.click();
-    document.body.removeChild(directA);
-
-    if (titleEl) titleEl.textContent = originalText;
-    showToast('Tautan unduhan dibuka. Periksa bilah unduhan browser Anda!');
+    // Method B: Direct Anchor click fallback (navigating to downloadUrl with Content-Disposition)
+    try {
+      const directA = document.createElement('a');
+      directA.href = preferredUrl;
+      directA.download = dl.filename;
+      directA.target = '_blank';
+      directA.rel = 'noopener noreferrer';
+      directA.style.display = 'none';
+      document.body.appendChild(directA);
+      directA.click();
+      document.body.removeChild(directA);
+      showToast(translate('toast_link_opened', 'Tautan unduhan dibuka. Periksa bilah unduhan browser Anda!'));
+    } catch (fallbackErr) {
+      if (directFallbackUrl && directFallbackUrl !== preferredUrl) {
+        window.open(directFallbackUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
   }
 
   function displayResult(video) {
@@ -649,17 +648,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const optionLink = document.createElement('a');
         const isPrimary = index === 0;
         optionLink.className = `download-option-btn ${isPrimary ? 'primary-download' : ''}`;
-        optionLink.href = dl.url || dl.downloadUrl;
+        optionLink.href = dl.downloadUrl || dl.url;
         optionLink.setAttribute('download', dl.filename);
         optionLink.setAttribute('rel', 'noopener noreferrer');
         optionLink.setAttribute('target', '_blank');
 
+        // Localized labels
+        let itemLabel = dl.label;
+        let itemDesc = dl.description || '';
+
+        if (dl.format === 'mp4') {
+          if (dl.id === 'video_hd' || dl.quality === 'HD' || isPrimary) {
+            itemLabel = translate('dl_no_watermark', dl.label);
+            itemDesc = translate('dl_no_watermark_desc', dl.description || '');
+          } else {
+            itemLabel = translate('dl_watermark', dl.label);
+            itemDesc = translate('dl_watermark_desc', dl.description || '');
+          }
+        } else if (dl.format === 'mp3') {
+          itemLabel = translate('dl_audio', dl.label);
+          itemDesc = translate('dl_audio_desc', dl.description || '');
+        }
+
         optionLink.innerHTML = `
           <div class="download-option-left">
-            <span class="download-format-badge">${dl.format || 'FILE'}</span>
+            <span class="download-format-badge">${dl.format ? dl.format.toUpperCase() : 'FILE'}</span>
             <div class="download-option-meta">
-              <span class="download-option-title">${dl.label}</span>
-              <span class="download-option-desc">${dl.description || ''}</span>
+              <span class="download-option-title">${itemLabel}</span>
+              <span class="download-option-desc">${itemDesc}</span>
             </div>
           </div>
           <div class="download-option-icon">
@@ -675,19 +691,19 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadOptionsContainer.appendChild(optionLink);
       });
 
-      // Add user-friendly tip for mobile browsers
+      // User-friendly tip for mobile browsers
       const tipBox = document.createElement('div');
       tipBox.className = 'download-helper-tip';
       tipBox.style.cssText = 'margin-top: 1rem; padding: 0.85rem 1rem; border-radius: 12px; background: rgba(0,242,254,0.06); border: 1px solid rgba(0,242,254,0.2); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; gap: 0.5rem; align-items: flex-start;';
       tipBox.innerHTML = `
         <span style="font-size: 1.1rem; flex-shrink: 0;">💡</span>
-        <span><strong>Tips Download:</strong> File otomatis terunduh ke perangkat Anda. Jika video terbuka di tab baru pada browser ponsel, ketuk tombol <strong>⋮</strong> (titik tiga) lalu pilih <strong>Download</strong> atau tahan video dan pilih <strong>Simpan Video</strong>.</span>
+        <span><strong>${translate('tip_prefix', 'Tips Download:')}</strong> ${translate('tip_text', 'File otomatis terunduh ke perangkat Anda. Jika video terbuka di tab baru pada browser ponsel, ketuk tombol ⋮ lalu pilih Download.')}</span>
       `;
       downloadOptionsContainer.appendChild(tipBox);
     } else {
       downloadOptionsContainer.innerHTML = `
         <div style="color: var(--text-secondary); font-size: 0.9rem; padding: 1rem 0;">
-          Tidak ada opsi unduhan yang dapat ditemukan untuk video ini.
+          ${translate('no_options_found', 'Tidak ada opsi unduhan yang dapat ditemukan untuk video ini.')}
         </div>
       `;
     }

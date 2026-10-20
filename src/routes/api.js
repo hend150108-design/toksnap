@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Readable } from 'stream';
 import { validateTikTokUrl, ValidationError } from '../validators/videoUrl.js';
 import { downloaderService } from '../services/downloader.js';
 import { resolveRateLimiter, downloadRateLimiter } from '../middleware/rateLimiter.js';
@@ -14,11 +15,17 @@ const ALLOWED_CDN_DOMAINS = [
   'tiktokcdn-eu.com',
   'tiktokcdn-in.com',
   'byteoversea.com',
+  'byteoversea.net',
   'ibytedtos.com',
+  'ibyteimg.com',
+  'bytevids.com',
+  'bytedance.com',
+  'ttwstatic.com',
   'tiktok.com',
   'douyincdn.com',
   'muscdn.com',
-  'musical.ly'
+  'musical.ly',
+  'akamaized.net'
 ];
 
 /**
@@ -147,11 +154,16 @@ router.get('/download', downloadRateLimiter, async (req, res, next) => {
       .substring(0, 100);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s for streaming
+    const timeout = setTimeout(() => controller.abort(), 55000); // 55s safety timeout
+
+    // Abort upstream connection if client disconnects
+    req.on('close', () => {
+      controller.abort();
+    });
 
     const upstreamHeaders = {
       'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
       'Referer': 'https://www.tiktok.com/'
     };
 
@@ -165,9 +177,8 @@ router.get('/download', downloadRateLimiter, async (req, res, next) => {
       signal: controller.signal
     });
 
-    clearTimeout(timeout);
-
     if (!upstreamResponse.ok && upstreamResponse.status !== 206) {
+      clearTimeout(timeout);
       return res
         .status(502)
         .send(`Gagal mengambil media dari server upstream (${upstreamResponse.status}).`);
@@ -198,33 +209,26 @@ router.get('/download', downloadRateLimiter, async (req, res, next) => {
       res.setHeader('Content-Length', contentLength);
     }
     res.setHeader('Cache-Control', 'no-cache');
-    if (contentLength) {
-      res.setHeader('Content-Length', contentLength);
-    }
-    res.setHeader('Cache-Control', 'no-cache');
 
-    // Stream native body to client
-    const reader = upstreamResponse.body.getReader();
-    const pump = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            res.end();
-            break;
-          }
-          res.write(value);
-        }
-      } catch (err) {
+    // Stream body to client using standard Node.js Readable stream
+    if (upstreamResponse.body) {
+      const nodeStream = Readable.fromWeb(upstreamResponse.body);
+      nodeStream.on('error', (err) => {
+        clearTimeout(timeout);
         if (!res.headersSent) {
           res.status(500).send('Koneksi streaming terputus.');
         } else {
           res.end();
         }
-      }
-    };
-
-    await pump();
+      });
+      res.on('finish', () => {
+        clearTimeout(timeout);
+      });
+      nodeStream.pipe(res);
+    } else {
+      clearTimeout(timeout);
+      res.end();
+    }
   } catch (err) {
     next(err);
   }

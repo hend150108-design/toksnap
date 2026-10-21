@@ -206,18 +206,7 @@ button, input {
 
 .nav-bullet,
 .nav-step-badge {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  min-width: 6px;
-  min-height: 6px;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.45);
-  padding: 0;
-  border: none;
-  letter-spacing: normal;
-  flex-shrink: 0;
-  transition: all var(--transition-fast);
+  display: none !important;
 }
 
 .nav-link:hover,
@@ -232,20 +221,6 @@ button, input {
   background-color: rgba(31, 41, 55, 0.85);
   border-color: rgba(203, 213, 225, 0.35);
   box-shadow: 0 0 16px rgba(203, 213, 225, 0.12);
-}
-
-.nav-link:hover .nav-bullet,
-.nav-link:hover .nav-step-badge {
-  background: var(--accent-platinum);
-  box-shadow: 0 0 8px rgba(248, 250, 252, 0.6);
-  transform: scale(1.25);
-}
-
-.nav-link.active .nav-bullet,
-.nav-link.active .nav-step-badge {
-  background: var(--accent-platinum);
-  box-shadow: 0 0 10px rgba(248, 250, 252, 0.85);
-  transform: scale(1.3);
 }
 
 .mobile-only-item {
@@ -527,12 +502,7 @@ button, input {
 }
 
 .badge-icon-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--accent-platinum);
-  box-shadow: 0 0 8px rgba(203, 213, 225, 0.6);
-  flex-shrink: 0;
+  display: none !important;
 }
 
 .badge-text {

@@ -204,14 +204,19 @@ button, input {
   white-space: nowrap;
 }
 
+.nav-bullet,
 .nav-step-badge {
-  font-size: 0.685rem;
-  font-weight: 700;
-  color: var(--accent-highlight);
-  background: rgba(148, 163, 184, 0.12);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  letter-spacing: 0.04em;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  min-height: 6px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.45);
+  padding: 0;
+  border: none;
+  letter-spacing: normal;
+  flex-shrink: 0;
   transition: all var(--transition-fast);
 }
 
@@ -229,10 +234,18 @@ button, input {
   box-shadow: 0 0 16px rgba(203, 213, 225, 0.12);
 }
 
-.nav-link.active .nav-step-badge,
+.nav-link:hover .nav-bullet,
 .nav-link:hover .nav-step-badge {
   background: var(--accent-platinum);
-  color: #0B0F17;
+  box-shadow: 0 0 8px rgba(248, 250, 252, 0.6);
+  transform: scale(1.25);
+}
+
+.nav-link.active .nav-bullet,
+.nav-link.active .nav-step-badge {
+  background: var(--accent-platinum);
+  box-shadow: 0 0 10px rgba(248, 250, 252, 0.85);
+  transform: scale(1.3);
 }
 
 .mobile-only-item {
@@ -2227,6 +2240,7 @@ html[dir="rtl"] .nav-link {
   flex-direction: row;
 }
 
+html[dir="rtl"] .nav-bullet,
 html[dir="rtl"] .nav-step-badge {
   margin-right: 0;
   margin-left: 0.4rem;

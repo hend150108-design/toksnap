@@ -24,6 +24,10 @@
           var m = document.cookie.match(/(?:^|;\s*)toksnap_language=([^;]+)/);
           if (m) savedLang = decodeURIComponent(m[1]).toLowerCase();
         }
+        if (!savedLang && window.name) {
+          var nm = window.name.match(/toksnap_language:([a-z]+)/);
+          if (nm && (nm[1] === 'en' || nm[1] === 'id')) savedLang = nm[1];
+        }
         if (!savedLang) {
           var bLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
           if (bLang.startsWith('en')) savedLang = 'en';
@@ -52,7 +56,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Stylesheet with Cache Busting -->
-  <link rel="stylesheet" href="./css/style.css?v=4.0">
+  <link rel="stylesheet" href="./css/style.css?v=4.1">
 </head>
 <body>
   <!-- Aksesibilitas: Skip Link -->
@@ -61,43 +65,43 @@
   <!-- Header / Navigation Bar -->
   <header class="site-header">
     <div class="header-container">
-      <a href="/" class="brand-link" aria-label="TokSnap Beranda">
+      <a href="./" class="brand-link" aria-label="TokSnap Beranda">
         <div class="brand-icon">
           <img src="./assets/logo.svg" alt="TokSnap Logo" width="34" height="34">
         </div>
         <span class="brand-text">Tok<span>Snap</span></span>
       </a>
 
-      <!-- Desktop Navigation Menu (Berurutan 01 -> 05) -->
+      <!-- Navigation Menu -->
       <nav aria-label="Menu Utama">
         <ul id="navMenu" class="nav-menu">
           <li>
             <a href="#beranda" class="nav-link active" data-nav-target="beranda">
-              <span class="nav-step-badge">01</span>
+              <span class="nav-bullet" aria-hidden="true"></span>
               <span class="nav-text" data-i18n="nav_home">Beranda</span>
             </a>
           </li>
           <li>
             <a href="#cara-penggunaan" class="nav-link" data-nav-target="cara-penggunaan">
-              <span class="nav-step-badge">02</span>
+              <span class="nav-bullet" aria-hidden="true"></span>
               <span class="nav-text" data-i18n="nav_how">Cara Pakai</span>
             </a>
           </li>
           <li>
             <a href="#keunggulan" class="nav-link" data-nav-target="keunggulan">
-              <span class="nav-step-badge">03</span>
+              <span class="nav-bullet" aria-hidden="true"></span>
               <span class="nav-text" data-i18n="nav_features">Keunggulan</span>
             </a>
           </li>
           <li>
             <a href="#faq" class="nav-link" data-nav-target="faq">
-              <span class="nav-step-badge">04</span>
+              <span class="nav-bullet" aria-hidden="true"></span>
               <span class="nav-text" data-i18n="nav_faq">FAQ</span>
             </a>
           </li>
           <li>
             <a href="#tentang" class="nav-link" data-nav-target="tentang">
-              <span class="nav-step-badge">05</span>
+              <span class="nav-bullet" aria-hidden="true"></span>
               <span class="nav-text" data-i18n="nav_about">Tentang Kami</span>
             </a>
           </li>
@@ -772,7 +776,7 @@
   </footer>
 
   <!-- Multi-Language Engine & Main App Script with Cache Busting -->
-  <script src="./js/i18n.js?v=4.0"></script>
-  <script src="./js/app.js?v=4.0"></script>
+  <script src="./js/i18n.js?v=4.1"></script>
+  <script src="./js/app.js?v=4.1"></script>
 </body>
 </html>

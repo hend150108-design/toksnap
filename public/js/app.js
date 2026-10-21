@@ -89,6 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Multi-Language Switcher (Indonesian & English) Dropdown & Mobile Chips
   function initLanguageDropdown() {
     if (!window.toksnapI18n) return;
+
+    // Trigger full translation pass to ensure all elements reflect the saved language
+    if (typeof window.toksnapI18n.init === 'function') {
+      window.toksnapI18n.init();
+    }
+
     const languages = window.toksnapI18n.languages;
     const currentLang = window.toksnapI18n.getCurrentLanguage();
     const langInfo = window.toksnapI18n.getLanguageInfo(currentLang);

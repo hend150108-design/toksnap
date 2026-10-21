@@ -265,10 +265,28 @@
   };
 
   /**
+   * Synchronize active language to URL query parameter (?lang=en or ?lang=id)
+   * Ensures browser reload/refresh (F5, swipe refresh) retains the selected language
+   */
+  function syncUrlLanguage(langCode) {
+    try {
+      if (typeof window !== 'undefined' && window.history && window.history.replaceState && window.location) {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('lang') !== langCode) {
+          url.searchParams.set('lang', langCode);
+          window.history.replaceState(null, '', url.toString());
+        }
+      }
+    } catch (e) {}
+  }
+
+  /**
    * Save selected language with high redundancy:
    * 1. localStorage (primary persistence across refreshes & sessions)
    * 2. sessionStorage (secondary session backup)
    * 3. Cookie (works even if localStorage is restricted or in strict privacy modes)
+   * 4. window.name (ultra-resilient fallback persisting across reloads in same tab)
+   * 5. URL query parameter (ensures browser reload strictly keeps language)
    */
   function saveLanguage(langCode) {
     if (!SUPPORTED_CODES.includes(langCode)) return;
@@ -287,6 +305,16 @@
       const oneYear = 365 * 24 * 60 * 60;
       document.cookie = `${STORAGE_KEY}=${encodeURIComponent(langCode)}; max-age=${oneYear}; path=/; SameSite=Lax`;
     } catch (e) {}
+
+    try {
+      if (typeof window !== 'undefined') {
+        const currentName = window.name || '';
+        const cleanName = currentName.replace(/toksnap_language:[a-z]+;?/g, '').trim();
+        window.name = `toksnap_language:${langCode};` + cleanName;
+      }
+    } catch (e) {}
+
+    syncUrlLanguage(langCode);
   }
 
   /**
@@ -295,8 +323,9 @@
    * 2. localStorage saved preference
    * 3. sessionStorage saved preference
    * 4. Cookie saved preference
-   * 5. Browser navigator language (en -> en, otherwise id)
-   * 6. Default fallback: 'id'
+   * 5. window.name saved preference
+   * 6. Browser navigator language (en -> en, otherwise id)
+   * 7. Default fallback: 'id'
    */
   function detectPreferredLanguage() {
     // 1. URL search parameter
@@ -337,7 +366,17 @@
       }
     } catch (e) {}
 
-    // 5. Browser language (if English -> 'en', default 'id')
+    // 5. window.name fallback
+    try {
+      if (typeof window !== 'undefined' && window.name) {
+        const nameMatch = window.name.match(/toksnap_language:([a-z]+)/);
+        if (nameMatch && SUPPORTED_CODES.includes(nameMatch[1])) {
+          return nameMatch[1];
+        }
+      }
+    } catch (e) {}
+
+    // 6. Browser language (if English -> 'en', default 'id')
     try {
       const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
       if (browserLang.startsWith('en')) {
@@ -376,6 +415,8 @@
 
     if (save) {
       saveLanguage(langCode);
+    } else {
+      syncUrlLanguage(langCode);
     }
 
     const langInfo = getLanguageInfo(langCode);
